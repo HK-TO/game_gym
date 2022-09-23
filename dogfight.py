@@ -1,3 +1,4 @@
+from traceback import print_tb
 import gym
 import numpy as np
 import cv2
@@ -9,13 +10,12 @@ class DogFight(gym.Env):
         self.GOAL_RANGE = 50 #ゴールの範囲設定
 
         # アクション数定義
-        self.num_actions = 1
-        # self.action_space = gym.spaces.Discrete(ACTION_NUM)
+        self.num_actions = 2
         self.action_space = gym.spaces.Box(np.ones(self.num_actions) * -1., np.ones(self.num_actions) * 1.)
 
         # 状態の範囲を定義
         self.num_states = 2
-        self.observation_space = gym.spaces.Box(np.ones(self.num_actions) * -np.Inf, np.ones(self.num_actions) * np.Inf)
+        self.observation_space = gym.spaces.Box(np.zeros(self.num_states), np.ones(self.num_states) * np.Inf)
 
         self.reset()
 
@@ -23,9 +23,8 @@ class DogFight(gym.Env):
         self.timestep = 0
 
         # ボールとゴールの位置をランダムで初期化
-        self.ball_position = np.array([np.random.randint(0, self.WINDOW_SIZE), np.random.randint(0, self.WINDOW_SIZE)])
-        self.goal_position = np.array([np.random.randint(0, self.WINDOW_SIZE), np.random.randint(0, self.WINDOW_SIZE)])
-
+        self.ball_position = np.random.rand(self.num_states) * float(self.WINDOW_SIZE)
+        self.goal_position = np.random.rand(self.num_states) * float(self.WINDOW_SIZE)
 
         # 状態の作成
         vec = self.ball_position - self.goal_position
@@ -36,9 +35,9 @@ class DogFight(gym.Env):
 
         return observation
 
-    def step(self, action_index):
-        action = self.ACTION_MAP[action_index]
-
+    def step(self, action):
+        # print(action)
+        # print(self.ball_position)
         self.ball_position = self.ball_position-action
 
         # 状態の作成
@@ -62,11 +61,13 @@ class DogFight(gym.Env):
     def render(self):
         # opencvで描画処理してます
         img = np.zeros((self.WINDOW_SIZE, self.WINDOW_SIZE, 3)) #画面初期化
+        goal_position = self.goal_position.astype(np.int32)
+        ball_position = self.ball_position.astype(np.int32)
 
-        cv2.circle(img,  tuple(self.goal_position), 10, (0, 255, 0), thickness=-1) #ゴールの描画
-        cv2.circle(img, tuple(self.goal_position), self.GOAL_RANGE, color=(0,255,0), thickness=5) #ゴールの範囲の描画
+        cv2.circle(img,  tuple(goal_position), 10, (0, 255, 0), thickness=-1) #ゴールの描画
+        cv2.circle(img, tuple(goal_position), self.GOAL_RANGE, color=(0,255,0), thickness=5) #ゴールの範囲の描画
 
-        cv2.circle(img,  tuple(self.ball_position), 10, (0, 0, 255), thickness=-1) #ボールの描画
+        cv2.circle(img,  tuple(ball_position), 10, (0, 0, 255), thickness=-1) #ボールの描画
 
         cv2.imshow('image', img)
         cv2.waitKey(1)
